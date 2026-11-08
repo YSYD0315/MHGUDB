@@ -13,13 +13,11 @@
 |---|---|---|
 | `README.md` | 文件 | 项目说明（已重写为中文 Web 版说明） |
 | `LICENSE.txt` | 文件 | MIT 开源许可证（版权归 DavianCorp 2014），必须保留 |
-| `PRIVACY.md` | 文件 | 隐私政策，声明应用不收集任何数据 |
-| `changelog.txt` | 文件 | 版本更新日志 |
 | `.gitignore` | 文件 | Git 忽略规则（已补充 Web 版规则并中文化注释） |
 | `assets.md` | 文件 | 本文档：仓库结构说明 |
 | `app/` | 目录 | 核心数据资产与源码参考（详见下文） |
 
-> 已删除：`captures/`（调试抓包）、三个本地库模块、全部 Gradle 构建文件（`build.gradle`、`settings.gradle`、`gradle.properties`、`gradlew*`、`gradle/`）。
+> 已删除：`PRIVACY.md`（隐私政策）、`changelog.txt`（更新日志）、`captures/`（调试抓包）、三个本地库模块、全部 Gradle 构建文件（`build.gradle`、`settings.gradle`、`gradle.properties`、`gradlew*`、`gradle/`）。
 
 ---
 

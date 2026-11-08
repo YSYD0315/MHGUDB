@@ -16,8 +16,6 @@
 | `assets.md` | 仓库结构详细说明、数据库遍历结论与 Web 化精简建议 |
 | `README.md` | 本文档 |
 | `LICENSE.txt` | MIT 开源许可证 |
-| `PRIVACY.md` | 隐私政策（不收集任何数据） |
-| `changelog.txt` | 版本更新日志 |
 | `.gitignore` | Git 忽略规则 |
 
 ---
