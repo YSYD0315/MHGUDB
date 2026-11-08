@@ -1,15 +1,15 @@
-Privacy Policy for MHGen Database
+# MHGen 数据库隐私政策
 
-Effective Date: 6/17/2025
+生效日期：2025 年 6 月 17 日
 
-Overview
+## 概述
 
-MHGen Database ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains that our app does not collect, store, or transmit any personal or non-personal information.
+MHGen 数据库（"我们"）致力于保护您的隐私。本隐私政策说明我们的应用**不会收集、存储或传输任何个人或非个人信息**。
 
-Data Collection
+## 数据收集
 
-MHGen Database does not collect, store, or transmit any personal or non-personal information.
+MHGen 数据库**不会收集、存储或传输任何个人或非个人信息**。
 
-Contact Us
+## 联系我们
 
-If you have any questions or concerns about this Privacy Policy, please contact us at contact@gatheringhallstudios.com
+如果您对本隐私政策有任何疑问或顾虑，请通过 contact@gatheringhallstudios.com 与我们联系。
