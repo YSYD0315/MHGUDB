@@ -25,7 +25,7 @@ gen/
 *.ap_
 *.aab
 *.dex
-*.class
+/data/mhgu.db
 
 # ===== Web 前端（node_modules、构建输出等） =====
 node_modules/
@@ -37,6 +37,3 @@ coverage/
 # ===== 临时文件 =====
 *.tmp
 *.temp
-
-# ===== 生成的数据文件（可由脚本重新生成） =====
-data/mhgu.db

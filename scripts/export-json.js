@@ -6,7 +6,7 @@
  * 供 Web 前端（GitHub Pages）使用。
  *
  * 设计要点：
- * 1. 按模块拆分，页面按需加载，避免一次性加载 38MB。
+ * 1. 按模块拆分，页面按需加载。
  * 2. 跳过 9 张空表与 3 张重复表（*_copy1）。
  * 3. 武器/防具/装饰品/随从猫装备的名称不在自身表，而在 items 表，
  *    导出时 JOIN items 合并 name / name_zh / description_zh。
@@ -19,7 +19,8 @@
  * 可选参数：
  *   --db <路径>    指定 .db 文件路径（默认 data/mhgu.db）
  *   --out <目录>   指定输出目录（默认 data/json/）
- *   --lang <代码>  只保留指定语言字段（默认保留全部，如 --lang zh 只保留中文+英文）
+ *
+ * 输出数据保留英语默认字段及中文、日语字段，不导出其他语言。
  */
 
 const fs = require('fs');
@@ -36,7 +37,6 @@ function getArg(name, def) {
 const repoRoot = path.resolve(__dirname, '..');
 const dbPath = path.resolve(getArg('--db', path.join(repoRoot, 'data', 'mhgu.db')));
 const outDir = path.resolve(getArg('--out', path.join(repoRoot, 'data', 'json')));
-const langFilter = getArg('--lang', ''); // 如 'zh'
 
 if (!fs.existsSync(dbPath)) {
   console.error(`[错误] 找不到数据库文件：${dbPath}`);
@@ -45,11 +45,9 @@ if (!fs.existsSync(dbPath)) {
 }
 
 // ---- 语言字段过滤 ----
-// 数据库含多语言列（name_en, name_zh, name_de, name_fr, name_es, name_it, name_ja 等）
-// --lang zh 时只保留中文+英文，丢弃其他语言以减小体积
-const KEEP_LANGS = langFilter ? new Set(['', 'en', langFilter]) : null;
+// 保留未带语言后缀的英语默认字段，以及英语、中文和日语翻译列。
+const KEEP_LANGS = new Set(['en', 'ja', 'zh']);
 function filterLang(obj) {
-  if (!KEEP_LANGS) return obj;
   const out = {};
   for (const [k, v] of Object.entries(obj)) {
     const m = k.match(/^(.*)_(en|zh|de|fr|es|it|ja|ko|ru)$/);
