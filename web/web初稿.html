@@ -1,0 +1,2585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MHGU Database</title>
+<style>
+:root {
+  --bg: #0f1419;
+  --bg-card: #1a2029;
+  --bg-hover: #232b36;
+  --bg-active: #2a3441;
+  --border: #2d3748;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --text-muted: #64748b;
+  --accent: #f59e0b;
+  --accent-hover: #fbbf24;
+  --danger: #ef4444;
+  --success: #10b981;
+  --info: #3b82f6;
+  --sidebar-w: 240px;
+  --header-h: 56px;
+  --radius: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.3);
+  --transition: 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", "Noto Sans JP", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Layout */
+.app { display: flex; min-height: 100vh; }
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  transition: transform var(--transition);
+}
+.sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--header-h);
+}
+.sidebar-header .logo {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; color: #000;
+}
+.sidebar-header h1 { font-size: 16px; font-weight: 600; }
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+.nav-section { margin-bottom: 8px; }
+.nav-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding: 8px 12px 4px;
+  font-weight: 600;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-dim);
+  font-size: 14px;
+  transition: all var(--transition);
+  text-decoration: none;
+  user-select: none;
+}
+.nav-item:hover { background: var(--bg-hover); color: var(--text); }
+.nav-item.active { background: var(--bg-active); color: var(--accent); font-weight: 500; }
+.nav-item .icon { width: 20px; text-align: center; font-size: 16px; }
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lang-select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  margin-left: var(--sidebar-w);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  height: var(--header-h);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+.breadcrumb a { color: var(--text-dim); text-decoration: none; }
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb .sep { color: var(--text-muted); }
+.header-spacer { flex: 1; }
+.search-box {
+  position: relative;
+  width: 280px;
+}
+.search-box input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 12px 6px 32px;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.search-box input:focus { border-color: var(--accent); }
+.search-box .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  max-height: 400px;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+  display: none;
+  z-index: 200;
+}
+.search-results.show { display: block; }
+.search-result-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: var(--bg-hover); }
+.search-result-item .cat-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--bg-active);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.search-no-result {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Content */
+.content {
+  flex: 1;
+  padding: 24px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Page title */
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.page-title .icon { font-size: 28px; }
+
+/* Cards / Grid */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: border-color var(--transition);
+}
+.card:hover { border-color: var(--text-muted); }
+
+.grid {
+  display: grid;
+  gap: 16px;
+}
+.grid-2 { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.grid-4 { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+
+/* List */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+  text-decoration: none;
+  color: var(--text);
+}
+.list-item:hover { background: var(--bg-hover); border-color: var(--accent); }
+.list-item .item-icon {
+  width: 40px; height: 40px;
+  background: var(--bg-active);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.list-item .item-info { flex: 1; min-width: 0; }
+.list-item .item-name { font-weight: 500; font-size: 14px; }
+.list-item .item-desc { font-size: 12px; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-item .item-meta { font-size: 12px; color: var(--text-muted); text-align: right; flex-shrink: 0; }
+
+/* Filters */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.filter-btn {
+  padding: 5px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.filter-btn:hover { border-color: var(--text-muted); color: var(--text); }
+.filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 500; }
+.filter-input {
+  padding: 5px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  font-size: 12px;
+  outline: none;
+}
+.filter-input:focus { border-color: var(--accent); }
+
+/* Table */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+th {
+  background: var(--bg-active);
+  font-weight: 600;
+  color: var(--text-dim);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  position: sticky;
+  top: 0;
+}
+tr:hover td { background: var(--bg-hover); }
+tr:last-child td { border-bottom: none; }
+
+/* Detail page */
+.detail-header {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 24px;
+  align-items: flex-start;
+}
+.detail-icon {
+  width: 80px; height: 80px;
+  background: var(--bg-active);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 40px;
+  flex-shrink: 0;
+}
+.detail-title { font-size: 28px; font-weight: 700; }
+.detail-subtitle { font-size: 14px; color: var(--text-dim); margin-top: 4px; }
+.detail-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--bg-active);
+  color: var(--text-dim);
+}
+.tag.fire { background: #7f1d1d; color: #fca5a5; }
+.tag.water { background: #1e3a5f; color: #93c5fd; }
+.tag.thunder { background: #713f12; color: #fde047; }
+.tag.ice { background: #164e63; color: #a5f3fc; }
+.tag.dragon { background: #4a1d6e; color: #d8b4fe; }
+
+.section {
+  margin-bottom: 24px;
+}
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+.stat-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  text-align: center;
+}
+.stat-value { font-size: 24px; font-weight: 700; color: var(--accent); }
+.stat-label { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+/* Weakness */
+.weakness-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.weakness-label { width: 60px; font-size: 12px; color: var(--text-dim); }
+.weakness-track {
+  flex: 1;
+  height: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.weakness-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+.weakness-val { width: 30px; text-align: right; font-size: 12px; font-weight: 600; }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+.tab {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition);
+  white-space: nowrap;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  transition: all var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover { background: var(--bg-hover); }
+.btn-primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 500; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+/* Loading / Error / Empty */
+.state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+.state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+.state-text { font-size: 14px; color: var(--text-dim); margin-bottom: 16px; }
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Overlay for mobile sidebar */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 90;
+}
+.overlay.show { display: block; }
+
+/* Back button */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-dim);
+  font-size: 13px;
+  cursor: pointer;
+  margin-bottom: 16px;
+  background: none;
+  border: none;
+  padding: 4px 0;
+}
+.back-btn:hover { color: var(--accent); }
+
+/* Weapon tree */
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all var(--transition);
+}
+.tree-node:hover { border-color: var(--accent); }
+.tree-node.current { border-color: var(--accent); background: rgba(245,158,11,0.1); }
+.tree-children { margin-left: 20px; border-left: 2px solid var(--border); padding-left: 12px; }
+
+/* Armor set builder */
+.set-builder {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 20px;
+}
+.set-slots { display: flex; flex-direction: column; gap: 8px; }
+.set-slot {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.set-slot:hover { border-color: var(--accent); }
+.set-slot .slot-label { font-size: 11px; color: var(--text-muted); }
+.set-slot .slot-value { font-size: 13px; font-weight: 500; margin-top: 2px; }
+.set-slot.empty .slot-value { color: var(--text-muted); font-style: italic; }
+
+/* Skill result */
+.skill-result {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.skill-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.skill-row:last-child { border-bottom: none; }
+.skill-name { font-weight: 500; }
+.skill-pts { color: var(--accent); font-weight: 600; }
+.skill-active { color: var(--success); }
+.skill-inactive { color: var(--text-muted); }
+
+/* Collection / Favorites */
+.collection-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+}
+.collection-item .qty-input {
+  width: 60px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+}
+.progress-bar {
+  height: 6px;
+  background: var(--bg);
+  border-radius: 3px;
+  overflow: hidden;
+  flex: 1;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--success);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+}
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header h3 { font-size: 16px; }
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 20px;
+  cursor: pointer;
+}
+.modal-body { padding: 20px; }
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  box-shadow: var(--shadow);
+  animation: slideIn 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error { border-left: 3px solid var(--danger); }
+.toast.info { border-left: 3px solid var(--info); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .menu-btn { display: block; }
+  .search-box { width: 200px; }
+  .set-builder { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .content { padding: 16px; }
+  .detail-header { flex-direction: column; }
+  .detail-icon { width: 60px; height: 60px; font-size: 30px; }
+  .detail-title { font-size: 22px; }
+  .search-box { width: 140px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .filters { gap: 6px; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .page-title { font-size: 20px; }
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Utility */
+.flex { display: flex; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 12px; }
+.mt-4 { margin-top: 16px; }
+.mb-2 { margin-bottom: 8px; }
+.mb-3 { margin-bottom: 12px; }
+.text-dim { color: var(--text-dim); }
+.text-muted { color: var(--text-muted); }
+.text-sm { font-size: 12px; }
+.text-xs { font-size: 11px; }
+.fw-600 { font-weight: 600; }
+.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hidden { display: none !important; }
+.w-full { width: 100%; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- Overlay for mobile -->
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+  
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">MH</div>
+      <h1 id="appTitle">MHGU Database</h1>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <select class="lang-select" id="langSelect" onchange="setLang(this.value)">
+        <option value="zh">简体中文</option>
+        <option value="ja">日本語</option>
+        <option value="en">English</option>
+      </select>
+      <span style="flex:1"></span>
+      <span class="text-xs text-muted" id="versionLabel">v0.1.0</span>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <header class="header">
+      <button class="menu-btn" id="menuBtn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+      <div class="breadcrumb" id="breadcrumb"></div>
+      <div class="header-spacer"></div>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="globalSearch" placeholder="Search..." autocomplete="off" aria-label="Search">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+    </header>
+    <main class="content" id="content">
+      <div class="state-container">
+        <div class="spinner"></div>
+        <div class="state-text">Loading...</div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle"></h3>
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ==================== i18n ====================
+const I18N = {
+  zh: {
+    appTitle: 'MHGU 资料库',
+    search: '搜索怪物、武器、防具、物品...',
+    monsters: '怪物', largeMonsters: '大型怪物', smallMonsters: '小型怪物', deviant: '二名怪物',
+    weapons: '武器', armor: '防具', decorations: '装饰品', items: '物品',
+    quests: '任务', maps: '地图', skillTrees: '技能树', palico: '随从猫',
+    crafting: '调和', setBuilder: '配装器', favorites: '收藏夹',
+    home: '首页', all: '全部', village: '村庄', hub: '集会所', event: '活动',
+    name: '名称', type: '类型', rarity: '稀有度', attack: '攻击力', defense: '防御力',
+    element: '属性', sharpness: '斩味', affinity: '会心', slots: '插槽',
+    weakness: '弱点', habitats: '栖息地', rewards: '报酬', relatedQuests: '相关任务',
+    loading: '加载中...', noData: '暂无数据', noResults: '无结果',
+    error: '加载失败', retry: '重试', back: '返回',
+    greatSword: '大剑', longSword: '太刀', swordAndShield: '片手剑', dualBlades: '双剑',
+    hammer: '锤', huntingHorn: '狩猎笛', lance: '长枪', gunlance: '铳枪',
+    switchAxe: '斩斧', chargeBlade: '盾斧', insectGlaive: '操虫棍',
+    lightBowgun: '轻弩', heavyBowgun: '重弩', bow: '弓',
+    head: '头', body: '身', arms: '腕', waist: '腰', legs: '脚',
+    blademaster: '剑士', gunner: '枪手',
+    fire: '火', water: '水', thunder: '雷', ice: '冰', dragon: '龙',
+    skills: '技能', points: '点数', activate: '激活',
+    materials: '素材', production: '生产', upgrade: '强化',
+    create: '创建', delete: '删除', edit: '编辑', save: '保存', cancel: '取消',
+    confirm: '确认', export: '导出', import: '导入',
+    localDataNotice: '数据保存在当前浏览器中，不会跨设备同步。',
+    fire_res: '火抗', water_res: '水抗', thunder_res: '雷抗', ice_res: '冰抗', dragon_res: '龙抗',
+    hr: 'HR', lr: 'LR', gr: 'G',
+    category: '分类', filter: '筛选', sort: '排序',
+    damageTable: '伤害表', status: '异常状态', traps: '陷阱/道具',
+    gathering: '采集', mining: '采矿', bonding: '采集点',
+    arena: '斗技场', specialPermit: '特殊许可证',
+    meowsters: 'Meowster 探险', palicoWeapons: '随从猫武器', palicoArmor: '随从猫防具',
+    combo: '调和', yield: '产量', successRate: '成功率',
+    talisman: '护石', skillResult: '技能结果',
+    targetQty: '目标数量', owned: '已持有', remaining: '剩余',
+    craftingPath: '制作路径',
+    dataSavedLocally: '数据仅保存在本地浏览器',
+    welcomeTitle: '欢迎使用 MHGU 资料库',
+    welcomeDesc: 'Monster Hunter Generations Ultimate 完整资料浏览工具',
+    quickAccess: '快速访问',
+    recentUpdates: '最近更新',
+    totalMonsters: '怪物总数', totalWeapons: '武器总数', totalArmor: '防具总数', totalQuests: '任务总数',
+    tree: '武器树', prev: '前置', next: '后续',
+    details: '详情', overview: '概览',
+    blademasterOnly: '仅剑士', gunnerOnly: '仅枪手',
+    slotRequired: '需要插槽', slotProvided: '提供技能',
+    negativeSkills: '包含负技能',
+    mainReward: '主目标报酬', subReward: '子任务报酬',
+    location: '地点', area: '区域', node: '节点',
+    fixed: '固定', rare: '稀有',
+    arenaNotice: '斗技场任务数据待核实',
+    importSuccess: '导入成功', importFailed: '导入失败',
+    exportSuccess: '导出成功',
+    deleteConfirm: '确认删除？此操作不可撤销。',
+    saveFailed: '保存失败，存储空间可能不足',
+  },
+  ja: {
+    appTitle: 'MHGU データベース',
+    search: 'モンスター、武器、防具、アイテムを検索...',
+    monsters: 'モンスター', largeMonsters: '大型モンスター', smallMonsters: '小型モンスター', deviant: '二つ名',
+    weapons: '武器', armor: '防具', decorations: '装飾品', items: 'アイテム',
+    quests: 'クエスト', maps: 'マップ', skillTrees: 'スキルツリー', palico: 'オトモアイルー',
+    crafting: '調合', setBuilder: '装備シミュレータ', favorites: 'お気に入り',
+    home: 'ホーム', all: '全て', village: '村', hub: '集会所', event: 'イベント',
+    name: '名前', type: 'タイプ', rarity: 'レア度', attack: '攻撃力', defense: '防御力',
+    element: '属性', sharpness: '斬れ味', affinity: '会心', slots: 'スロット',
+    weakness: '弱点', habitats: '生息地', rewards: '報酬', relatedQuests: '関連クエスト',
+    loading: '読み込み中...', noData: 'データなし', noResults: '結果なし',
+    error: '読み込み失敗', retry: '再試行', back: '戻る',
+    greatSword: '大剣', longSword: '太刀', swordAndShield: '片手剣', dualBlades: '双剣',
+    hammer: 'ハンマー', huntingHorn: '狩猟笛', lance: 'ランス', gunlance: 'ガンランス',
+    switchAxe: 'スラッシュアックス', chargeBlade: 'チャージアックス', insectGlaive: '操虫棍',
+    lightBowgun: 'ライトボウガン', heavyBowgun: 'ヘビィボウガン', bow: '弓',
+    head: '頭', body: '胴', arms: '腕', waist: '腰', legs: '脚',
+    blademaster: 'ブレイムマスター', gunner: 'ガンナー',
+    fire: '火', water: '水', thunder: '雷', ice: '氷', dragon: '龍',
+    skills: 'スキル', points: 'ポイント', activate: '発動',
+    materials: '素材', production: '生産', upgrade: '強化',
+    create: '作成', delete: '削除', edit: '編集', save: '保存', cancel: 'キャンセル',
+    confirm: '確認', export: 'エクスポート', import: 'インポート',
+    localDataNotice: 'データは現在のブラウザに保存されます。',
+    fire_res: '火耐性', water_res: '水耐性', thunder_res: '雷耐性', ice_res: '氷耐性', dragon_res: '龍耐性',
+    hr: 'HR', lr: 'LR', gr: 'G',
+    category: 'カテゴリ', filter: 'フィルター', sort: 'ソート',
+    damageTable: 'ダメージ表', status: '状態異常', traps: '罠/アイテム',
+    gathering: '採集', mining: '採鉱', bonding: '採集ポイント',
+    arena: '闘技場', specialPermit: '特殊許可証',
+    meowster: 'ニャルゲ探検', palicoWeapons: 'オトモ武器', palicoArmor: 'オトモ防具',
+    combo: '調合', yield: '産出数', successRate: '成功率',
+    talisman: '護石', skillResult: 'スキル結果',
+    targetQty: '目標数', owned: '所持数', remaining: '残り',
+    craftingPath: '生産パス',
+    dataSavedLocally: 'データはローカルブラウザにのみ保存',
+    welcomeTitle: 'MHGUデータベースへようこそ',
+    welcomeDesc: 'Monster Hunter Generations Ultimate 総合データ閲覧ツール',
+    quickAccess: 'クイックアクセス',
+    recentUpdates: '最近の更新',
+    totalMonsters: 'モンスター数', totalWeapons: '武器数', totalArmor: '防具数', totalQuests: 'クエスト数',
+    tree: '武器ツリー', prev: '前', next: '次',
+    details: '詳細', overview: '概要',
+    blademasterOnly: 'ブレイムマスター専用', gunnerOnly: 'ガンナー専用',
+    slotRequired: '必要スロット', slotProvided: '提供スキル',
+    negativeSkills: '負スキル含む',
+    mainReward: 'メイン報酬', subReward: 'サブ報酬',
+    location: '場所', area: 'エリア', node: 'ノード',
+    fixed: '固定', rare: 'レア',
+    arenaNotice: '闘技場クエストデータは確認中',
+    importSuccess: 'インポート成功', importFailed: 'インポート失敗',
+    exportSuccess: 'エクスポート成功',
+    deleteConfirm: '削除しますか？この操作は取り消せません。',
+    saveFailed: '保存失敗、ストレージ不足の可能性',
+  },
+  en: {
+    appTitle: 'MHGU Database',
+    search: 'Search monsters, weapons, armor, items...',
+    monsters: 'Monsters', largeMonsters: 'Large Monsters', smallMonsters: 'Small Monsters', deviant: 'Deviants',
+    weapons: 'Weapons', armor: 'Armor', decorations: 'Decorations', items: 'Items',
+    quests: 'Quests', maps: 'Maps', skillTrees: 'Skill Trees', palico: 'Palico',
+    crafting: 'Crafting', setBuilder: 'Set Builder', favorites: 'Favorites',
+    home: 'Home', all: 'All', village: 'Village', hub: 'Hub', event: 'Event',
+    name: 'Name', type: 'Type', rarity: 'Rarity', attack: 'Attack', defense: 'Defense',
+    element: 'Element', sharpness: 'Sharpness', affinity: 'Affinity', slots: 'Slots',
+    weakness: 'Weakness', habitats: 'Habitats', rewards: 'Rewards', relatedQuests: 'Related Quests',
+    loading: 'Loading...', noData: 'No data', noResults: 'No results',
+    error: 'Load failed', retry: 'Retry', back: 'Back',
+    greatSword: 'Great Sword', longSword: 'Long Sword', swordAndShield: 'Sword & Shield', dualBlades: 'Dual Blades',
+    hammer: 'Hammer', huntingHorn: 'Hunting Horn', lance: 'Lance', gunlance: 'Gunlance',
+    switchAxe: 'Switch Axe', chargeBlade: 'Charge Blade', insectGlaive: 'Insect Glaive',
+    lightBowgun: 'Light Bowgun', heavyBowgun: 'Heavy Bowgun', bow: 'Bow',
+    head: 'Head', body: 'Body', arms: 'Arms', waist: 'Waist', legs: 'Legs',
+    blademaster: 'Blademaster', gunner: 'Gunner',
+    fire: 'Fire', water: 'Water', thunder: 'Thunder', ice: 'Ice', dragon: 'Dragon',
+    skills: 'Skills', points: 'Points', activate: 'Activate',
+    materials: 'Materials', production: 'Production', upgrade: 'Upgrade',
+    create: 'Create', delete: 'Delete', edit: 'Edit', save: 'Save', cancel: 'Cancel',
+    confirm: 'Confirm', export: 'Export', import: 'Import',
+    localDataNotice: 'Data is saved in the current browser only.',
+    fire_res: 'Fire Res', water_res: 'Water Res', thunder_res: 'Thunder Res', ice_res: 'Ice Res', dragon_res: 'Dragon Res',
+    hr: 'HR', lr: 'LR', gr: 'G',
+    category: 'Category', filter: 'Filter', sort: 'Sort',
+    damageTable: 'Damage Table', status: 'Status Ailments', traps: 'Traps/Items',
+    gathering: 'Gathering', mining: 'Mining', bonding: 'Gathering Points',
+    arena: 'Arena', specialPermit: 'Special Permit',
+    meowsters: 'Meowster Missions', palicoWeapons: 'Palico Weapons', palicoArmor: 'Palico Armor',
+    combo: 'Combo', yield: 'Yield', successRate: 'Success Rate',
+    talisman: 'Talisman', skillResult: 'Skill Result',
+    targetQty: 'Target Qty', owned: 'Owned', remaining: 'Remaining',
+    craftingPath: 'Crafting Path',
+    dataSavedLocally: 'Data is saved locally in your browser only',
+    welcomeTitle: 'Welcome to MHGU Database',
+    welcomeDesc: 'Monster Hunter Generations Ultimate comprehensive data browser',
+    quickAccess: 'Quick Access',
+    recentUpdates: 'Recent Updates',
+    totalMonsters: 'Total Monsters', totalWeapons: 'Total Weapons', totalArmor: 'Total Armor', totalQuests: 'Total Quests',
+    tree: 'Weapon Tree', prev: 'Previous', next: 'Next',
+    details: 'Details', overview: 'Overview',
+    blademasterOnly: 'Blademaster Only', gunnerOnly: 'Gunner Only',
+    slotRequired: 'Slot Required', slotProvided: 'Skill Provided',
+    negativeSkills: 'Include Negative Skills',
+    mainReward: 'Main Reward', subReward: 'Sub Reward',
+    location: 'Location', area: 'Area', node: 'Node',
+    fixed: 'Fixed', rare: 'Rare',
+    arenaNotice: 'Arena quest data pending verification',
+    importSuccess: 'Import successful', importFailed: 'Import failed',
+    exportSuccess: 'Export successful',
+    deleteConfirm: 'Confirm delete? This cannot be undone.',
+    saveFailed: 'Save failed, storage may be full',
+  }
+};
+
+// ==================== State ====================
+let currentLang = localStorage.getItem('mhgu_lang') || 'zh';
+let currentRoute = { page: 'home', params: {} };
+let sidebarOpen = false;
+
+// ==================== Mock Data ====================
+const MOCK_DATA = {
+  monsters: [
+    { id: 1, name: 'Rathalos', name_zh: '火龙', name_ja: 'リオレウス', type: 'large', icon: '🐉', element: 'fire', threat: 5, habitats: [1,2,3] },
+    { id: 2, name: 'Rathian', name_zh: '雌火龙', name_ja: 'リオレイア', type: 'large', icon: '🐉', element: 'fire', threat: 4, habitats: [1,2] },
+    { id: 3, name: 'Nargacuga', name_zh: '迅龙', name_ja: 'ナルガクルガ', type: 'large', icon: '🐈', element: 'none', threat: 5, habitats: [3,5] },
+    { id: 4, name: 'Zinogre', name_zh: '雷狼龙', name_ja: 'ジンオウガ', type: 'large', icon: '🐺', element: 'thunder', threat: 5, habitats: [4,5] },
+    { id: 5, name: 'Brachydios', name_zh: '碎龙', name_ja: 'ブラキディオス', type: 'large', icon: '🦎', element: 'none', threat: 5, habitats: [4] },
+    { id: 6, name: 'Silverwind Nargacuga', name_zh: '银岭迅龙', name_ja: '月迅竜', type: 'deviant', icon: '🐈', element: 'dragon', threat: 7, habitats: [5] },
+    { id: 7, name: 'Dreadking Rathalos', name_zh: '烈焰火龙', name_ja: '紅兜リオレウス', type: 'deviant', icon: '🐉', element: 'fire', threat: 7, habitats: [1] },
+    { id: 8, name: 'Velociprey', name_zh: '速龙王', name_ja: 'ヴェロciprey', type: 'small', icon: '🦎', element: 'none', threat: 1, habitats: [1,2] },
+    { id: 9, name: 'Apceros', name_zh: '岩龙幼', name_ja: 'アプケロス', type: 'small', icon: '🦕', element: 'none', threat: 1, habitats: [4] },
+    { id: 10, name: 'Congalala', name_zh: '桃毛兽王', name_ja: 'コンガララル', type: 'large', icon: '🐒', element: 'none', threat: 3, habitats: [2,3] },
+  ],
+  weapons: [
+    { id: 1, name: 'Iron Sword', name_zh: '铁剑', name_ja: '鉄剣', type: 'swordAndShield', attack: 70, element: 'none', affinity: 0, slots: 0, rarity: 1, icon: '🗡️' },
+    { id: 2, name: 'Iron Sword +1', name_zh: '铁剑改', name_ja: '鉄剣改', type: 'swordAndShield', attack: 90, element: 'none', affinity: 0, slots: 0, rarity: 1, icon: '🗡️', tree: 1 },
+    { id: 3, name: 'Bone Blade', name_zh: '骨刀', name_ja: 'ボーンブレード', type: 'longSword', attack: 80, element: 'none', affinity: 10, slots: 0, rarity: 1, icon: '⚔️' },
+    { id: 4, name: 'Rathalos Blade', name_zh: '火龙剑', name_ja: 'リオレウスブレード', type: 'greatSword', attack: 200, element: 'fire', affinity: 15, slots: 1, rarity: 4, icon: '🗡️' },
+    { id: 5, name: 'Zinogre Hammer', name_zh: '雷狼锤', name_ja: 'ジンオウガハンマー', type: 'hammer', attack: 180, element: 'thunder', affinity: 0, slots: 2, rarity: 5, icon: '🔨' },
+    { id: 6, name: 'Nargacuga Bow', name_zh: '迅龙弓', name_ja: 'ナルガ弓', type: 'bow', attack: 160, element: 'none', affinity: 40, slots: 0, rarity: 5, icon: '🏹' },
+    { id: 7, name: 'Laguna Light Bowgun', name_zh: '轻弩', name_ja: 'ライトボウガン', type: 'lightBowgun', attack: 120, element: 'none', affinity: 0, slots: 1, rarity: 3, icon: '🔫' },
+  ],
+  armor: [
+    { id: 1, name: 'Leather Headgear', name_zh: '皮帽', name_ja: 'レザーヘッド', type: 'head', class: 'blademaster', defense: 10, fire_res: 2, water_res: 0, thunder_res: -2, ice_res: 0, dragon_res: 0, slots: 0, rarity: 1, icon: '🎩', skills: { 1: 1 } },
+    { id: 2, name: 'Leather Mail', name_zh: '皮甲', type: 'body', class: 'blademaster', defense: 12, fire_res: 2, water_res: 0, thunder_res: -2, ice_res: 0, dragon_res: 0, slots: 0, rarity: 1, icon: '👕' },
+    { id: 3, name: 'Rathalos Helm', name_zh: '火龙头盔', type: 'head', class: 'blademaster', defense: 70, fire_res: 3, water_res: 1, thunder_res: -3, ice_res: 1, dragon_res: 3, slots: 2, rarity: 5, icon: '⛑️', skills: { 3: 2, 5: 1 } },
+    { id: 4, name: 'Rathalos Mail', name_zh: '火龙铠甲', type: 'body', class: 'blademaster', defense: 74, fire_res: 3, water_res: 1, thunder_res: -3, ice_res: 1, dragon_res: 3, slots: 1, rarity: 5, icon: '🦺' },
+    { id: 5, name: 'Nargacuga Coil', name_zh: '迅龙腰甲', type: 'waist', class: 'gunner', defense: 65, fire_res: -3, water_res: 1, thunder_res: -2, ice_res: 1, dragon_res: 2, slots: 2, rarity: 5, icon: '👖' },
+  ],
+  decorations: [
+    { id: 1, name: 'Attack Jewel', name_zh: '攻击珠', slots: 1, skills: { 1: 1 }, icon: '💎' },
+    { id: 2, name: 'Expert Jewel', name_zh: '达人珠', slots: 1, skills: { 2: 1 }, icon: '💎' },
+    { id: 3, name: 'Fire Atk Jewel', name_zh: '火攻珠', slots: 2, skills: { 4: 1 }, icon: '💎' },
+    { id: 4, name: 'Shield Jewel', name_zh: '防壁珠', slots: 2, skills: { 6: 1 }, icon: '💎' },
+  ],
+  items: [
+    { id: 1, name: 'Potion', name_zh: '回复药', rarity: 1, icon: '🧪', desc: 'Restores 30 HP' },
+    { id: 2, name: 'Mega Potion', name_zh: '回复药大', rarity: 2, icon: '🧪', desc: 'Restores 50 HP' },
+    { id: 3, name: 'Fireball', name_zh: '爆炎袋', rarity: 3, icon: '🔥', desc: 'A monster material' },
+    { id: 4, name: 'Dragonite Ore', name_zh: '龙脉石', rarity: 4, icon: '💎', desc: 'Rare ore used in crafting' },
+    { id: 5, name: 'Monster Fluid', name_zh: '怪物浓液', rarity: 3, icon: '🫧', desc: 'Used in crafting' },
+  ],
+  quests: [
+    { id: 1, name: 'Wrath of the Rathalos', name_zh: '火龙的愤怒', type: 'hub', stars: 6, hr: 5, icon: '📜', location: 'Ancient Forest' },
+    { id: 2, name: 'The Thundering King', name_zh: '雷狼龙之王', type: 'hub', stars: 7, hr: 7, icon: '📜', location: 'Forbidden Forest' },
+    { id: 3, name: 'Village Defense', name_zh: '村庄防卫战', type: 'village', stars: 3, hr: 2, icon: '📜', location: 'Village' },
+    { id: 4, name: 'Arena: Rathalos', name_zh: '斗技场：火龙', type: 'arena', stars: 5, hr: 4, icon: '📜', location: 'Arena' },
+  ],
+  maps: [
+    { id: 1, name: 'Ancient Forest', name_zh: '古代林', icon: '🌲', areas: 15 },
+    { id: 2, name: 'Frozen Seaway', name_zh: '冻土', icon: '🏔️', areas: 10 },
+    { id: 3, name: 'Jungle', name_zh: '密林', icon: '🌴', areas: 12 },
+    { id: 4, name: 'Volcanic Hollow', name_zh: '火山', icon: '🌋', areas: 11 },
+    { id: 5, name: 'Forbidden Forest', name_zh: '禁足地', icon: '🌑', areas: 9 },
+  ],
+  skillTrees: [
+    { id: 1, name: 'Attack', name_zh: '攻击', thresholds: [{ pts: 10, skill: 'Attack Up (S)' }, { pts: 15, skill: 'Attack Up (M)' }, { pts: 20, skill: 'Attack Up (L)' }] },
+    { id: 2, name: 'Expert', name_zh: '达人', thresholds: [{ pts: 10, skill: 'Critical Eye +1' }, { pts: 15, skill: 'Critical Eye +2' }, { pts: 20, skill: 'Critical Eye +3' }] },
+    { id: 3, name: 'Fire Attack', name_zh: '火属性攻击', thresholds: [{ pts: 10, skill: 'Fire Atk +1' }, { pts: 15, skill: 'Fire Atk +2' }] },
+    { id: 4, name: 'Guard', name_zh: '防御强化', thresholds: [{ pts: 15, skill: 'Guard +1' }, { pts: 20, skill: 'Guard +2' }] },
+    { id: 5, name: 'Evade', name_zh: '回避', thresholds: [{ pts: 10, skill: 'Evade +1' }, { pts: 15, skill: 'Evade +2' }] },
+    { id: 6, name: 'Artillery', name_zh: '炮术', thresholds: [{ pts: 10, skill: 'Artillery +1' }, { pts: 15, skill: 'Artillery +2' }] },
+  ],
+};
+
+// ==================== Navigation ====================
+const NAV_ITEMS = [
+  { section: 'data', items: [
+    { id: 'monsters', icon: '🐉', key: 'monsters' },
+    { id: 'weapons', icon: '⚔️', key: 'weapons' },
+    { id: 'armor', icon: '🛡️', key: 'armor' },
+    { id: 'decorations', icon: '💎', key: 'decorations' },
+    { id: 'items', icon: '🎒', key: 'items' },
+    { id: 'quests', icon: '📜', key: 'quests' },
+    { id: 'maps', icon: '🗺️', key: 'maps' },
+    { id: 'skillTrees', icon: '🌳', key: 'skillTrees' },
+    { id: 'palico', icon: '🐱', key: 'palico' },
+    { id: 'crafting', icon: '⚗️', key: 'crafting' },
+  ]},
+  { section: 'tools', items: [
+    { id: 'setBuilder', icon: '🧰', key: 'setBuilder' },
+    { id: 'favorites', icon: '⭐', key: 'favorites' },
+  ]},
+];
+
+function t(key) {
+  return I18N[currentLang]?.[key] || I18N.en[key] || key;
+}
+
+function getName(item) {
+  if (!item) return '';
+  if (currentLang === 'zh' && item.name_zh) return item.name_zh;
+  if (currentLang === 'ja' && item.name_ja) return item.name_ja;
+  return item.name || '';
+}
+
+// ==================== Router ====================
+function navigate(page, params = {}) {
+  currentRoute = { page, params };
+  let hash = '#/' + page;
+  if (params.id) hash += '/' + params.id;
+  if (params.tab) hash += '?tab=' + params.tab;
+  history.pushState(null, '', hash);
+  render();
+}
+
+function parseHash() {
+  const hash = location.hash || '#/home';
+  const parts = hash.replace('#/', '').split('/');
+  const page = parts[0] || 'home';
+  const params = {};
+  if (parts[1]) {
+    const [id, query] = parts[1].split('?');
+    params.id = id;
+    if (query) {
+      query.split('&').forEach(p => {
+        const [k, v] = p.split('=');
+        params[k] = v;
+      });
+    }
+  }
+  return { page, params };
+}
+
+window.addEventListener('popstate', () => {
+  currentRoute = parseHash();
+  render();
+});
+
+// ==================== Sidebar ====================
+function renderSidebar() {
+  const nav = document.getElementById('sidebarNav');
+  let html = '';
+  
+  // Home
+  html += `<a class="nav-item ${currentRoute.page === 'home' ? 'active' : ''}" onclick="navigate('home');closeSidebar()" href="#/home">
+    <span class="icon">🏠</span><span>${t('home')}</span>
+  </a>`;
+  
+  NAV_ITEMS.forEach(section => {
+    html += `<div class="nav-section"><div class="nav-section-title">${t(section.section === 'data' ? 'overview' : 'setBuilder')}</div>`;
+    section.items.forEach(item => {
+      html += `<a class="nav-item ${currentRoute.page === item.id ? 'active' : ''}" onclick="navigate('${item.id}');closeSidebar()" href="#/${item.id}">
+        <span class="icon">${item.icon}</span><span>${t(item.key)}</span>
+      </a>`;
+    });
+    html += '</div>';
+  });
+  
+  nav.innerHTML = html;
+  document.getElementById('appTitle').textContent = t('appTitle');
+}
+
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('open', sidebarOpen);
+  document.getElementById('overlay').classList.toggle('show', sidebarOpen);
+}
+function closeSidebar() {
+  sidebarOpen = false;
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ==================== Breadcrumb ====================
+function renderBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  let html = `<a href="#/home" onclick="navigate('home')">${t('home')}</a>`;
+  if (currentRoute.page !== 'home') {
+    const navItem = [...NAV_ITEMS.flatMap(s => s.items)].find(i => i.id === currentRoute.page);
+    const label = navItem ? t(navItem.key) : currentRoute.page;
+    html += `<span class="sep">›</span><span>${label}</span>`;
+    if (currentRoute.params.id) {
+      const data = findItemById(currentRoute.page, currentRoute.params.id);
+      if (data) {
+        html += `<span class="sep">›</span><span>${getName(data)}</span>`;
+      }
+    }
+  }
+  bc.innerHTML = html;
+}
+
+function findItemById(page, id) {
+  const data = MOCK_DATA[page];
+  if (!data) return null;
+  return data.find(d => d.id == id);
+}
+
+// ==================== Search ====================
+function setupSearch() {
+  const input = document.getElementById('globalSearch');
+  const results = document.getElementById('searchResults');
+  input.placeholder = t('search');
+  
+  let debounceTimer;
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      const q = input.value.trim().toLowerCase();
+      if (!q) { results.classList.remove('show'); return; }
+      performSearch(q);
+    }, 200);
+  });
+  
+  input.addEventListener('focus', () => {
+    if (input.value.trim()) performSearch(input.value.trim().toLowerCase());
+  });
+  
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-box')) results.classList.remove('show');
+  });
+  
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { results.classList.remove('show'); input.blur(); }
+  });
+}
+
+function performSearch(q) {
+  const results = document.getElementById('searchResults');
+  const matches = [];
+  const categories = ['monsters', 'weapons', 'armor', 'decorations', 'items', 'quests', 'maps', 'skillTrees'];
+  
+  categories.forEach(cat => {
+    const data = MOCK_DATA[cat] || [];
+    data.forEach(item => {
+      const name = getName(item).toLowerCase();
+      const enName = (item.name || '').toLowerCase();
+      if (name.includes(q) || enName.includes(q)) {
+        matches.push({ ...item, _category: cat });
+      }
+    });
+  });
+  
+  if (matches.length === 0) {
+    results.innerHTML = `<div class="search-no-result">${t('noResults')}</div>`;
+  } else {
+    results.innerHTML = matches.slice(0, 20).map(m => {
+      const catLabel = t(MOCK_DATA[m._category] ? m._category : m._category);
+      return `<div class="search-result-item" onclick="navigate('${m._category}', {id: ${m.id}});document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value='';">
+        <span class="cat-badge">${catLabel}</span>
+        <span>${getName(m)}</span>
+      </div>`;
+    }).join('');
+  }
+  results.classList.add('show');
+}
+
+// ==================== Language ====================
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('mhgu_lang', lang);
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang === 'ja' ? 'ja' : 'en';
+  render();
+}
+
+// ==================== Render ====================
+function render() {
+  renderSidebar();
+  renderBreadcrumb();
+  
+  const content = document.getElementById('content');
+  const { page, params } = currentRoute;
+  
+  // Simulate loading
+  content.innerHTML = `<div class="state-container"><div class="spinner"></div><div class="state-text">${t('loading')}</div></div>`;
+  
+  setTimeout(() => {
+    switch(page) {
+      case 'home': renderHome(content); break;
+      case 'monsters': params.id ? renderMonsterDetail(content, params.id) : renderMonsterList(content); break;
+      case 'weapons': params.id ? renderWeaponDetail(content, params.id) : renderWeaponList(content); break;
+      case 'armor': params.id ? renderArmorDetail(content, params.id) : renderArmorList(content); break;
+      case 'decorations': params.id ? renderDecoDetail(content, params.id) : renderDecoList(content); break;
+      case 'items': params.id ? renderItemDetail(content, params.id) : renderItemList(content); break;
+      case 'quests': params.id ? renderQuestDetail(content, params.id) : renderQuestList(content); break;
+      case 'maps': params.id ? renderMapDetail(content, params.id) : renderMapList(content); break;
+      case 'skillTrees': params.id ? renderSkillDetail(content, params.id) : renderSkillList(content); break;
+      case 'palico': renderPalico(content); break;
+      case 'crafting': renderCrafting(content); break;
+      case 'setBuilder': renderSetBuilder(content); break;
+      case 'favorites': renderFavorites(content); break;
+      default: renderHome(content);
+    }
+  }, 150);
+}
+
+// ==================== Home ====================
+function renderHome(el) {
+  el.innerHTML = `
+    <div class="page-title"><span class="icon">🏠</span>${t('welcomeTitle')}</div>
+    <p class="text-dim mb-4">${t('welcomeDesc')}</p>
+    <div class="card mb-4" style="background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.02));">
+      <p class="text-sm text-dim">ℹ️ ${t('dataSavedLocally')}</p>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">📊 ${t('overview')}</div>
+      <div class="stats-grid">
+        <div class="stat-card" onclick="navigate('monsters')" style="cursor:pointer">
+          <div class="stat-value">${MOCK_DATA.monsters.length}</div>
+          <div class="stat-label">${t('totalMonsters')}</div>
+        </div>
+        <div class="stat-card" onclick="navigate('weapons')" style="cursor:pointer">
+          <div class="stat-value">${MOCK_DATA.weapons.length}</div>
+          <div class="stat-label">${t('totalWeapons')}</div>
+        </div>
+        <div class="stat-card" onclick="navigate('armor')" style="cursor:pointer">
+          <div class="stat-value">${MOCK_DATA.armor.length}</div>
+          <div class="stat-label">${t('totalArmor')}</div>
+        </div>
+        <div class="stat-card" onclick="navigate('quests')" style="cursor:pointer">
+          <div class="stat-value">${MOCK_DATA.quests.length}</div>
+          <div class="stat-label">${t('totalQuests')}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">⚡ ${t('quickAccess')}</div>
+      <div class="grid grid-4">
+        ${NAV_ITEMS.flatMap(s => s.items).map(item => `
+          <div class="list-item" onclick="navigate('${item.id}')" style="flex-direction:column;padding:20px;text-align:center;">
+            <span style="font-size:32px;margin-bottom:8px">${item.icon}</span>
+            <span class="item-name">${t(item.key)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ==================== Monster ====================
+function renderMonsterList(el) {
+  const data = MOCK_DATA.monsters;
+  el.innerHTML = `
+    <div class="page-title"><span class="icon">🐉</span>${t('monsters')}</div>
+    <div class="filters">
+      <button class="filter-btn active" onclick="filterMonsters('all', this)">${t('all')}</button>
+      <button class="filter-btn" onclick="filterMonsters('large', this)">${t('largeMonsters')}</button>
+      <button class="filter-btn" onclick="filterMonsters('deviant', this)">${t('deviant')}</button>
+      <button class="filter-btn" onclick="filterMonsters('small', this)">${t('smallMonsters')}</button>
+      <input class="filter-input" placeholder="${t('name')}" oninput="searchMonsterList(this.value)" id="monsterSearch">
+    </div>
+    <div class="grid grid-2" id="monsterGrid">
+      ${data.map(m => monsterCard(m)).join('')}
+    </div>
+  `;
+}
+
+function monsterCard(m) {
+  const elemClass = m.element !== 'none' ? m.element : '';
+  return `<div class="list-item monster-card" data-type="${m.type}" data-name="${getName(m).toLowerCase()}" onclick="navigate('monsters',{id:${m.id}})">
+    <div class="item-icon">${m.icon}</div>
+    <div class="item-info">
+      <div class="item-name">${getName(m)}</div>
+      <div class="item-desc">${m.element !== 'none' ? t(m.element) + ' | ' : ''}${t(m.type === 'deviant' ? 'deviant' : m.type === 'small' ? 'smallMonsters' : 'largeMonsters')}</div>
+    </div>
+    <div class="item-meta">
+      ${m.element !== 'none' ? `<span class="tag ${elemClass}">${t(m.element)}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+function filterMonsters(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.monster-card').forEach(card => {
+    card.style.display = (type === 'all' || card.dataset.type === type) ? '' : 'none';
+  });
+}
+
+function searchMonsterList(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.monster-card').forEach(card => {
+    card.style.display = card.dataset.name.includes(q) ? '' : 'none';
+  });
+}
+
+function renderMonsterDetail(el, id) {
+  const m = findItemById('monsters', id);
+  if (!m) { el.innerHTML = emptyState(); return; }
+  
+  const weaknesses = {
+    fire: 30, water: 50, thunder: 20, ice: 40, dragon: 10
+  };
+  
+  el.innerHTML = `
+    <button class="back-btn" onclick="navigate('monsters')">← ${t('back')}</button>
+    <div class="detail-header">
+      <div class="detail-icon">${m.icon}</div>
+      <div>
+        <div class="detail-title">${getName(m)}</div>
+        <div class="detail-subtitle">${m.name}</div>
+        <div class="detail-tags">
+          <span class="tag">${t(m.type === 'deviant' ? 'deviant' : m.type === 'small' ? 'smallMonsters' : 'largeMonsters')}</span>
+          ${m.element !== 'none' ? `<span class="tag ${m.element}">${t(m.element)}</span>` : ''}
+          <span class="tag">⭐ ${m.threat}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="tabs">
+      <button class="tab active" onclick="switchMonsterTab('overview', this)">${t('overview')}</button>
+      <button class="tab" onclick="switchMonsterTab('damage', this)">${t('damageTable')}</button>
+      <button class="tab" onclick="switchMonsterTab('rewards', this)">${t('rewards')}</button>
+      <button class="tab" onclick="switchMonsterTab('quests', this)">${t('relatedQuests')}</button>
+    </div>
+    
+    <div id="monsterTabContent">
+      ${renderMonsterOverview(m, weaknesses)}
+    </div>
+  `;
+}
+
+function renderMonsterOverview(m, weaknesses) {
+  return `
+    <div class="section">
+      <div class="section-title">🎯 ${t('weakness')}</div>
+      <div class="card">
+        ${Object.entries(weaknesses).map(([elem, val]) => `
+          <div class="weakness-bar">
+            <span class="weakness-label">${t(elem)}</span>
+            <div class="weakness-track">
+              <div class="weakness-fill" style="width:${val}%;background:${elem === 'fire' ? '#ef4444' : elem === 'water' ? '#3b82f6' : elem === 'thunder' ? '#eab308' : elem === 'ice' ? '#06b6d4' : '#a855f7'}"></div>
+            </div>
+            <span class="weakness-val">${val}%</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">🗺️ ${t('habitats')}</div>
+      <div class="grid grid-3">
+        ${m.habitats.map(hid => {
+          const map = MOCK_DATA.maps.find(mp => mp.id === hid);
+          return map ? `<div class="list-item" onclick="navigate('maps',{id:${map.id}})">
+            <div class="item-icon">${map.icon}</div>
+            <div class="item-info"><div class="item-name">${getName(map)}</div></div>
+          </div>` : '';
+        }).join('')}
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">📊 ${t('status')}</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value">70%</div><div class="stat-label">Poison</div></div>
+        <div class="stat-card"><div class="stat-value">50%</div><div class="stat-label">Sleep</div></div>
+        <div class="stat-card"><div class="stat-value">60%</div><div class="stat-label">Paralysis</div></div>
+        <div class="stat-card"><div class="stat-value">40%</div><div class="stat-label">Stun</div></div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">🪤 ${t('traps')}</div>
+      <div class="card">
+        <div class="flex justify-between mb-2"><span>Pitfall Trap</span><span class="text-dim">★★★</span></div>
+        <div class="flex justify-between mb-2"><span>Shock Trap</span><span class="text-dim">★★★</span></div>
+        <div class="flex justify-between mb-2"><span>Tranq Bomb</span><span class="text-dim">★★☆</span></div>
+        <div class="flex justify-between"><span>Dung Pod</span><span class="text-dim">★★★</span></div>
+      </div>
+    </div>
+  `;
+}
+
+function switchMonsterTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const m = findItemById('monsters', currentRoute.params.id);
+  const container = document.getElementById('monsterTabContent');
+  
+  if (tab === 'overview') {
+    container.innerHTML = renderMonsterOverview(m, { fire: 30, water: 50, thunder: 20, ice: 40, dragon: 10 });
+  } else if (tab === 'damage') {
+    container.innerHTML = `
+      <div class="section">
+        <div class="section-title">📊 ${t('damageTable')}</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Part</th><th>${t('fire')}</th><th>${t('water')}</th><th>${t('thunder')}</th><th>${t('ice')}</th><th>${t('dragon')}</th></tr></thead>
+            <tbody>
+              <tr><td>Head</td><td>⭐⭐⭐</td><td>⭐⭐</td><td>⭐</td><td>⭐⭐</td><td>⭐</td></tr>
+              <tr><td>Neck</td><td>⭐⭐</td><td>⭐⭐</td><td>⭐</td><td>⭐⭐</td><td>⭐</td></tr>
+              <tr><td>Body</td><td>⭐</td><td>⭐⭐</td><td>⭐</td><td>⭐</td><td>⭐</td></tr>
+              <tr><td>Wings</td><td>⭐⭐</td><td>⭐</td><td>⭐⭐</td><td>⭐</td><td>⭐⭐</td></tr>
+              <tr><td>Tail</td><td>⭐⭐</td><td>⭐</td><td>⭐</td><td>⭐⭐</td><td>⭐</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } else if (tab === 'rewards') {
+    container.innerHTML = `
+      <div class="section">
+        <div class="section-title">🎁 ${t('rewards')} - ${t('lr')}</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>${t('name')}</th><th>Rate</th><th>Type</th></tr></thead>
+            <tbody>
+              <tr><td>Rathalos Scale</td><td>35%</td><td>Body</td></tr>
+              <tr><td>Rathalos Shell</td><td>28%</td><td>Body</td></tr>
+              <tr><td>Rathalos Tail</td><td>12%</td><td>Tail</td></tr>
+              <tr><td>Rathalos Wing</td><td>10%</td><td>Wing</td></tr>
+              <tr><td>Flame Sac</td><td>8%</td><td>Body</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">🎁 ${t('rewards')} - ${t('hr')}</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>${t('name')}</th><th>Rate</th><th>Type</th></tr></thead>
+            <tbody>
+              <tr><td>Rathalos Scale+</td><td>38%</td><td>Body</td></tr>
+              <tr><td>Rathalos Carapace</td><td>30%</td><td>Body</td></tr>
+              <tr><td>Rathalos Tail</td><td>15%</td><td>Tail</td></tr>
+              <tr><td>Rathalos Wing</td><td>12%</td><td>Wing</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } else if (tab === 'quests') {
+    const related = MOCK_DATA.quests.filter(q => q.location === 'Ancient Forest' || true);
+    container.innerHTML = `
+      <div class="section">
+        <div class="section-title">📜 ${t('relatedQuests')}</div>
+        <div class="grid grid-2">
+          ${MOCK_DATA.quests.map(q => `<div class="list-item" onclick="navigate('quests',{id:${q.id}})">
+            <div class="item-icon">${q.icon}</div>
+            <div class="item-info">
+              <div class="item-name">${getName(q)}</div>
+              <div class="item-desc">${t(q.type)} ★${q.stars} | HR${q.hr}</div>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+}
+
+// ==================== Weapons ====================
+function renderWeaponList(el) {
+  const types = ['greatSword','longSword','swordAndShield','dualBlades','hammer','huntingHorn','lance','gunlance','switchAxe','chargeBlade','insectGlaive','lightBowgun','heavyBowgun','bow'];
+  const typeIcons = { greatSword:'🗡️', longSword:'⚔️', swordAndShield:'🛡️', dualBlades:'🗡️🗡️', hammer:'🔨', huntingHorn:'🎵', lance:'🔱', gunlance:'💥', switchAxe:'🪓', chargeBlade:'⚡', insectGlaive:'🦗', lightBowgun:'🔫', heavyBowgun:'🎯', bow:'🏹' };
+  
+  el.innerHTML = `
+    <div class="page-title"><span class="icon">⚔️</span>${t('weapons')}</div>
+    <div class="filters">
+      <button class="filter-btn active" onclick="filterWeapons('all', this)">${t('all')}</button>
+      ${types.map(tp => `<button class="filter-btn" onclick="filterWeapons('${tp}', this)">${t(tp)}</button>`).join('')}
+    </div>
+    <div class="grid grid-2" id="weaponGrid">
+      ${MOCK_DATA.weapons.map(w => weaponCard(w)).join('')}
+    </div>
+  `;
+}
+
+function weaponCard(w) {
+  return `<div class="list-item weapon-card" data-type="${w.type}" onclick="navigate('weapons',{id:${w.id}})">
+    <div class="item-icon">${w.icon}</div>
+    <div class="item-info">
+      <div class="item-name">${getName(w)}</div>
+      <div class="item-desc">${t(w.type)} | ATK ${w.attack}${w.element !== 'none' ? ' | ' + t(w.element) : ''}</div>
+    </div>
+    <div class="item-meta">
+      <div class="text-sm">R${w.rarity}</div>
+      ${w.affinity ? `<div class="text-xs ${w.affinity > 0 ? 'text-dim' : ''}">${w.affinity > 0 ? '+' : ''}${w.affinity}%</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function filterWeapons(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.weapon-card').forEach(card => {
+    card.style.display = (type === 'all' || card.dataset.type === type) ? '' : 'none';
+  });
+}
+
+function renderWeaponDetail(el, id) {
+  const w = findItemById('weapons', id);
+  if (!w) { el.innerHTML = emptyState(); return; }
+  
+  const sameType = MOCK_DATA.weapons.filter(wp => wp.type === w.type && wp.id !== w.id);
+  
+  el.innerHTML = `
+    <button class="back-btn" onclick="navigate('weapons')">← ${t('back')}</button>
+    <div class="detail-header">
+      <div class="detail-icon">${w.icon}</div>
+      <div>
+        <div class="detail-title">${getName(w)}</div>
+        <div class="detail-subtitle">${w.name}</div>
+        <div class="detail-tags">
+          <span class="tag">${t(w.type)}</span>
+          ${w.element !== 'none' ? `<span class="tag ${w.element}">${t(w.element)}</span>` : ''}
+          <span class="tag">R${w.rarity}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">📊 ${t('details')}</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value">${w.attack}</div><div class="stat-label">${t('attack')}</div></div>
+        <div class="stat-card"><div class="stat-value">${w.affinity}%</div><div class="stat-label">${t('affinity')}</div></div>
+        <div class="stat-card"><div class="stat-value">${w.slots}</div><div class="stat-label">${t('slots')}</div></div>
+        <div class="stat-card"><div class="stat-value">R${w.rarity}</div><div class="stat-label">${t('rarity')}</div></div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">🌳 ${t('tree')}</div>
+      <div>
+        <div class="tree-node current">${w.icon} ${getName(w)} (Current)</div>
+        ${sameType.length > 0 ? `<div class="tree-children">${sameType.map(sw => `
+          <div class="tree-node" onclick="navigate('weapons',{id:${sw.id}})">${sw.icon} ${getName(sw)} - ATK ${sw.attack}</div>
+        `).join('')}</div>` : '<p class="text-dim text-sm mt-2">No related weapons in tree</p>'}
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">🔧 ${t('materials')}</div>
+      <div class="card">
+        <div class="flex justify-between mb-2"><span>Dragonite Ore</span><span class="text-dim">x3</span></div>
+        <div class="flex justify-between mb-2"><span>Machalite Ore</span><span class="text-dim">x5</span></div>
+        <div class="flex justify-between"><span>Monster Bone+</span><span class="text-dim">x2</span></div>
+      </div>
+    </div>
+  `;
+}
+
+// ==================== Armor ====================
+function renderArmorList(el) {
+  el.innerHTML = `
+    <div class="page-title"><span class="icon">🛡️</span>${t('armor')}</div>
+    <div class="filters">
+      <button class="filter-btn active" onclick="filterArmor('all', this)">${t('all')}</button>
+      <button class="filter-btn" onclick="filterArmor('blademaster', this)">${t('blademaster')}</button>
+      <button class="filter-btn" onclick="filterArmor('gunner', this)">${t('gunner')}</button>
+      <button class="filter-btn" onclick="filterArmor('head', this)">${t('head')}</button>
+      <button class="filter-btn" onclick="filterArmor('body', this)">${t('body')}</button>
+      <button class="filter-btn" onclick="filterArmor('arms', this)">${t('arms')}</button>
+      <button class="filter-btn" onclick="filterArmor('waist', this)">${t('waist')}</button>
+      <button class="filter-btn" onclick="filterArmor('legs', this)">${t('legs')}</button>
+    </div>
+    <div class="grid grid-2" id="armorGrid">
+      ${MOCK_DATA.armor.map(a => armorCard(a)).join('')}
+    </div>
+  `;
+}
+
+function armorCard(a) {
+  return `<div class="list-item armor-card" data-class="${a.class}" data-type="${a.type}" onclick="navigate('armor',{id:${a.id}})">
+    <div class="item-icon">${a.icon}</div>
+    <div class="item-info">
+      <div class="item-name">${getName(a)}</div>
+      <div class="item-desc">${t(a.type)} | DEF ${a.defense} | ${t(a.class === 'blademaster' ? 'blademaster' : 'gunner')}</div>
+    </div>
+    <div class="item-meta">
+      <div class="text-sm">R${a.rarity}</div>
+      <div class="text-xs text-dim">${a.slots} ${t('slots')}</div>
+    </div>
+  </div>`;
+}
+
+function filterArmor(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.armor-card').forEach(card => {
+    if (type === 'all') { card.style.display = ''; return; }
+    card.style.display = (card.dataset.class === type || card.dataset.type === type) ? '' : 'none';
+  });
+}
+
+function renderArmorDetail(el, id) {
+  const a = findItemById('armor', id);
+  if (!a) { el.innerHTML = emptyState(); return; }
+  
+  el.innerHTML = `
+    <button class="back-btn" onclick="navigate('armor')">← ${t('back')}</button>
+    <div class="detail-header">
+      <div class="detail-icon">${a.icon}</div>
+      <div>
+        <div class="detail-title">${getName(a)}</div>
+        <div class="detail-subtitle">${a.name}</div>
+        <div class="detail-tags">
+          <span class="tag">${t(a.type)}</span>
+          <span class="tag">${t(a.class === 'blademaster' ? 'blademaster' : 'gunner')}</span>
+          <span class="tag">R${a.rarity}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">📊 ${t('details')}</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value">${a.defense}</div><div class="stat-label">${t('defense')}</div></div>
+        <div class="stat-card"><div class="stat-value">${a.slots}</div><div class="stat-label">${t('slots')}</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:#ef4444">${a.fire_res > 0 ? '+' : ''}${a.fire_res}</div><div class="stat-label">${t('fire_res')}</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:#3b82f6">${a.water_res > 0 ? '+' : ''}${a.water_res}</div><div class="stat-label">${t('water_res')}</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:#eab308">${a.thunder_res > 0 ? '+' : ''}${a.thunder_res}</div><div class="stat-label">${t('thunder_res')}</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:#06b6d4">${a.ice_res > 0 ? '+' : ''}${a.ice_res}</div><div class="stat-label">${t('ice_res')}</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:#a855f7">${a.dragon_res > 0 ? '+' : ''}${a.dragon_res}</div><div class="stat-label">${t('dragon_res')}</div></div>
+      </div>
+    </div>
+    
+    ${a.skills ? `<div class="section">
+      <div class="section-title">🌳 ${t('skills')}</div>
+      <div class="card">
+        ${Object.entries(a.skills).map(([sid, pts]) => {
+          const st = MOCK_DATA.skillTrees.find(s => s.id == sid);
+          return st ? `<div class="flex justify-between mb-2"><span>${getName(st)}</span><span class="text-dim">+${pts}</span></div>` : '';
+        }).join('')}
+      </div>
+    </div>` : ''}
+    
+    <div class="section">
+      <div class="section-title">🔧 ${t('materials')}</div>
+      <div class="card">
+        <div class="flex justify-between mb-2"><span>Rathalos Scale</span><span class="text-dim">x2</span></div>
+        <div class="flex justify-between mb-2"><span>Rathalos Shell</span><span class="text-dim">x3</span></div>
+        <div class="flex justify-between"><span>Dragonite Ore</span><span class="text-dim">x1</span></div>
+      </div>
+    </div>
+  `;
+}
+
+// ==================== Decorations ====================
+function renderDecoList(el) {
+  el.innerHTML = `
+    <div class="page-title"><span class="icon">💎</span>${t('decorations')}</div>
+    <div class="filters">
+      <input class="filter-input" placeholder="${t('name')}" oninput="searchDecoList(this.value)">
+      <button class="filter-btn" onclick="filterDecoSlots(1, this)">1 ${t('slots')}</button>
+      <button class="filter-btn" onclick="filterDecoSlots(2, this)">2 ${t('slots')}</button>
+      <button class="filter-btn" onclick="filterDecoSlots(3, this)">3 ${t('slots')}</button>
+    </div>
+    <div class="grid grid-3" id="decoGrid">
+      ${MOCK_DATA.decorations.map(d => `<div class="list-item deco-card" data-slots="${d.slots}" onclick="navigate('decorations',{id:${d.id}})">
+        <div class="item-icon">${d.icon}</div>
+        <div class="item-info">
+          <div class="item-name">${getName(d)}</div>
+          <div class="item-desc">${t('slotRequired')}: ${d.slots}</div>
+        </div>
+      </div>`).join('')}
+    </div>
+  `;
+}
+
+function searchDecoList(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.deco-card').forEach(c => {
+    c.style.display = getName(MOCK_DATA.decorations.find(d => d.id == [...document.querySelectorAll('.deco-card')].indexOf(c) + 1) || {}).toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function filterDecoSlots(slots, btn) {
+  btn.classList.toggle('active');
+  const active = [...document.querySelectorAll('.filters .filter-btn.active')].map(b => b.textContent);
+  document.querySelectorAll('.deco-card').forEach(c => {
+    const s = parseInt(c.dataset.slots);
+    c.style.display = (active.length === 0 || active.some(a => a.includes(s.toString()))) ? '' : 'none';
+  });
+}
+
+function renderDecoDetail(el, id) {
+  const d = findItemById('decorations', id);
+  if (!d) { el.innerHTML = emptyState(); return; }
+  el.innerHTML = `
+    <button class="back-btn" onclick="navigate('decorations')">← ${t('back')}</button>
+    <div class="detail-header">
+      <div class="detail-icon">${d.icon}</div>
+      <div>
+        <div class="detail-title">${getName(d)}</div>
+        <div class="detail-subtitle">${d.name}</div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">📊 ${t('details')}</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value">${d.slots}</div><div class="stat-label">${t('slotRequired')}</div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">🌳 ${t('slotProvided')}</div>
+      <div class="card">
+        ${Object.entries(d.skills).map(([sid, pts]) => {
+          const st = MOCK_DATA.skillTrees.find(s => s.id == sid);
+          return st ? `<div class="flex justify-between"><span>${getName(st)}</span><span class="text-dim">+${pts}</span></div>` : '';
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ==================== Items ====================
+function renderItemList(el) {
+  el.innerHTML = `
+    <div class="page-title"><span class="icon">🎒</span>${t('items')}</div>
+    <div class="filters">
+      <input class="filter-input" placeholder="${t('name')}" oninput="searchItemList(this.value)" id="itemSearch">
+    </div>
+    <div class="grid grid-2" id="itemGrid">
+      ${MOCK_DATA.items.map(i => `<div class="list-item item-card" data-name="${getName(i).toLowerCase()}" onclick="navigate('items',{id:${i.id}})">
+        <div class="item-icon">${i.icon}</div>
+        <div class="item-info">
+          <div class="item-name">${getName(i)}</div>
+          <div class="item-desc">${i.desc}</div>
+        </div>
+        <div class="item-meta"><div class="text-sm">R${i.rarity}</div></div>
+      </div>`).join('')}
+    </div>
+  `;
+}
+
+function searchItemList(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.item-card').forEach(c => {
+    c.style.display = c.dataset.name.includes(q) ? '' : 'none';
+  });
+}
+
+function renderItemDetail(el, id) {
+  const i = findItemById('items', id);
+  if (!i) { el.innerHTML = emptyState(); return; }
+  el.innerHTML = `
+    <button class="back-btn" onclick="navigate('items')">← ${t('back')}</button>
+    <div class="detail-header">
+      <div class="detail-icon">${i.icon}</div>
+      <div>
+        <div class="detail-title">${getName(i)}</div>
+        <div class="detail-subtitle">${i.name}</div>
+        <div class="detail-tags"><span class="tag">R${i.rarity}</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">📝 ${t('details')}</div>
+      <div class="card"><p>${i.desc}</p></div>
+    </div>
+    <div class="section">
+      <div class="section-title">⚗️ ${t('combo')}</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Input 1</th><th>Input 2</th><th>${t('yield')}</th><th>${t('successRate')}</th></tr></thead>
+          <tbody>
+            <tr><td>Herb</td><td>Godbug</td><td>1</td><td>55%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">🎁 ${t('rewards')}</div>
+      <div class="card"><p class="text-dim">${t('noData')}</p></div>
+    </div>
+  `;
+}
+
+// ==================== Quests ====================
+function renderQuestList(el) {
+  el.innerHTML = `
+    <div class="page-title"><span class="icon">📜</span>${t('quests')}</div>
+    <div class="card mb-3" style="border-left: 3px solid var(--accent);">
+      <p class="text-sm text-dim">ℹ️ ${t('arenaNotice')}</p>
+    </div>
+    <div class="filters">
+      <button class="filter-btn active" onclick="filterQuests('all', this)">${t('all')}</button>
+      <button class="filter-btn" onclick="filterQuests('village', this)">${t('village')}</button>
+      <button class="filter-btn" onclick="filterQuests('hub', this)">${t('hub')}</button>
+      <button class="filter-btn" onclick="filterQuests('event', this)">${t('event')}</button>
+      <button class="filter-btn" onclick="filterQuests('arena', this)">${t('arena')}</button>
+    </div>
+    <div class="grid grid-2" id="questGrid">
+      ${MOCK_DATA.quests.map(q => `<div class="list-item quest-card" data-type="${q.type}" onclick="navigate('quests',{id:${q.id}})">
+        <div class="item-icon">${q.icon}</div>
+        <div class="item-info">
+          <div class="item-name">${getName(q)}</div>
+          <div class="item-desc">${t(q.type)} | ★${q.stars} | HR${q.hr}</div>
+        </div>
+        <div class="item-meta"><div class="text-xs text-dim">${q.location}</div></div>
+      </div>`).join('')}
+    </div>
+  `;
+}
+
+function filterQuests(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.quest-card').forEach(c => {
+    c.style.display = (type === 'all' || c.dataset.type === type) ? '' : 'none';
+  });
+}
+
+function renderQuestDetail(el, id) {
+  const q = findItemById('quests', id);
+  if (!q) { el.innerHTML = emptyState(); return; }
+  el.innerHTML = `
+    <button class="back-btn" onclick="navigate('quests')">← ${t('back')}</button>
+    <div class="detail-header">
+      <div class="detail-icon">${q.icon}</div>
+      <div>
+        <div class="detail-title">${getName(q)}</div>
+        <div class="detail-subtitle">${q.name}</div>
+        <div class="detail-tags">
+          <span class="tag">${t(q.type)}</span>
+          <span class="tag">★${q.stars}</span>
+          <span class="tag">HR${q.hr}</span>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">🎯 ${t('details')}</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value">★${q.stars}</div><div class="stat-label">Stars</div></div>
+        <div class="stat-card"><div class="stat-value">HR${q.hr}</div><div class="stat-label">HR</div></div>
+        <div class="stat-card"><div class="stat-value">1200z</div><div class="stat-label">Fee</div></div>
+        <div class="stat-card"><div class="stat-value">8500z</div><div class="stat-label">Reward</div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">🗺️ ${t('location')}</div>
+      <div class="card"><p>${q.location}</p></div>
+    </div>
+    <div class="section">
+      <div class="section-title">🎁 ${t('mainReward')}</div>
+      <div class="card">
+        <div class="flex justify-between mb-2"><span>Rathalos Scale+</span><span class="text-dim">40%</span></div>
+        <div class="flex justify-between mb-2"><span>Rathalos Carapace</span><span class="text-dim">30%</span></div>
+        <div class="flex justify-between"><span>Dragonite Ore</span><span class="text-dim">20%</span></div>
+      </div>
+    </div>
+  `;
+}
+
+// ==================== Maps ====================
+function renderMapList(el) {
+  el.innerHTML = `
+    <div class="page-title"><span class="icon">🗺️</span>${t('maps')}</div>
+    <div class="grid grid-3">
+      ${MOCK_DATA.maps.map(m => `<div class="list-item" onclick="navigate('maps',{id:${m.id}})">
+        <div class="item-icon">${m.icon}</div>
+        <div class="item-info">
+          <div class="item-name">${getName(m)}</div>
+          <div class="item-desc">${m.areas} ${t('area')}</div>
+        </div>
+      </div>`).join('')}
+    </div>
+  `;
+}
+
+function renderMapDetail(el, id) {
+  const m = findItemById('maps', id);
+  if (!m) { el.innerHTML = emptyState(); return; }
+  el.innerHTML = `
+    <button class="back-btn" onclick="navigate('maps')">← ${t('back')}</button>
+    <div class="detail-header">
+      <div class="detail-icon">${m.icon}</div>
+      <div>
+        <div class="detail-title">${getName(m)}</div>
+        <div class="detail-subtitle">${m.name}</div>
+        <div class="detail-tags"><span class="tag">${m.areas} ${t('area')}</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">🐉 ${t('monsters')}</div>
+      <div class="grid grid-2">
+        ${MOCK_DATA.monsters.filter(mon => mon.habitats.includes(m.id)).map(mon => `
+          <div class="list-item" onclick="navigate('monsters',{id:${mon.id}})">
+            <div class="item-icon">${mon.icon}</div>
+            <div class="item-info"><div class="item-name">${getName(mon)}</div></div>
+          </div>
+        `).join('') || `<p class="text-dim">${t('noData')}</p>`}
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">🌿 ${t('gathering')}</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>${t('area')}</th><th>${t('node')}</th><th>Item</th><th>Rate</th><th>Type</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>A</td><td>Herb</td><td>42%</td><td>${t('gathering')}</td></tr>
+            <tr><td>1</td><td>B</td><td>Honey</td><td>30%</td><td>${t('gathering')}</td></tr>
+            <tr><td>3</td><td>A</td><td>Machalite Ore</td><td>25%</td><td>${t('mining')}</td></tr>
+            <tr><td>5</td><td>C</td><td>Dragonite Ore</td><td>15%</td><td>${t('mining')}</td></tr>
+            <tr><td>7</td><td>A</td><td>Unique Mushroom</td><td>20%</td><td>${t('gathering')}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ==================== Skill Trees ====================
+function renderSkillList(el) {
+  el.innerHTML = `
+    <div class="page-title"><span class="icon">🌳</span>${t('skillTrees')}</div>
+    <div class="filters">
+      <input class="filter-input" placeholder="${t('name')}" oninput="searchSkillList(this.value)">
+    </div>
+    <div class="grid grid-2" id="skillGrid">
+      ${MOCK_DATA.skillTrees.map(s => `<div class="list-item skill-card" data-name="${getName(s).toLowerCase()}" onclick="navigate('skillTrees',{id:${s.id}})">
+        <div class="item-icon">🌳</div>
+        <div class="item-info">
+          <div class="item-name">${getName(s)}</div>
+          <div class="item-desc">${s.thresholds.length} ${t('skills')}</div>
+        </div>
+      </div>`).join('')}
+    </div>
+  `;
+}
+
+function searchSkillList(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.skill-card').forEach(c => {
+    c.style.display = c.dataset.name.includes(q) ? '' : 'none';
+  });
+}
+
+function renderSkillDetail(el, id) {
+  const s = findItemById('skillTrees', id);
+  if (!s) { el.innerHTML = emptyState(); return; }
+  
+  // Find equipment providing this skill
+  const armorSources = MOCK_DATA.armor.filter(a => a.skills && a.skills[s.id]);
+  const decoSources = MOCK_DATA.decorations.filter(d => d.skills && d.skills[s.id]);
+  
+  el.innerHTML = `
+    <button class="back-btn" onclick="navigate('skillTrees')">← ${t('back')}</button>
+    <div class="detail-header">
+      <div class="detail-icon">🌳</div>
+      <div>
+        <div class="detail-title">${getName(s)}</div>
+        <div class="detail-subtitle">${s.name}</div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">📊 ${t('skills')} ${t('points')}</div>
+      <div class="card">
+        ${s.thresholds.map(th => `
+          <div class="flex justify-between mb-2">
+            <span>${th.skill}</span>
+            <span class="text-dim">${th.pts} ${t('points')}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">🛡️ ${t('armor')} ${t('sources')}</div>
+      <div class="grid grid-2">
+        ${armorSources.length > 0 ? armorSources.map(a => `
+          <div class="list-item" onclick="navigate('armor',{id:${a.id}})">
+            <div class="item-icon">${a.icon}</div>
+            <div class="item-info">
+              <div class="item-name">${getName(a)}</div>
+              <div class="item-desc">+${a.skills[s.id]} ${t('points')}</div>
+            </div>
+          </div>
+        `).join('') : `<p class="text-dim">${t('noData')}</p>`}
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">💎 ${t('decorations')} ${t('sources')}</div>
+      <div class="grid grid-2">
+        ${decoSources.length > 0 ? decoSources.map(d => `
+          <div class="list-item" onclick="navigate('decorations',{id:${d.id}})">
+            <div class="item-icon">${d.icon}</div>
+            <div class="item-info">
+              <div class="item-name">${getName(d)}</div>
+              <div class="item-desc">+${d.skills[s.id]} ${t('points')} | ${d.slots} ${t('slots')}</div>
+            </div>
+          </div>
+        `).join('') : `<p class="text-dim">${t('noData')}</p>`}
+      </div>
+    </div>
+  `;
+}
+
+// ==================== Palico ====================
+function renderPalico(el) {
+  el.innerHTML = `
+    <div class="page-title"><span class="icon">🐱</span>${t('palico')}</div>
+    <div class="tabs">
+      <button class="tab active">${t('palicoWeapons')}</button>
+      <button class="tab">${t('palicoArmor')}</button>
+      <button class="tab">${t('meowsters')}</button>
+    </div>
+    <div class="grid grid-2">
+      ${[1,2,3,4].map(i => `<div class="card">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="item-icon">🐱</div>
+          <div>
+            <div class="fw-600">Palico Weapon ${i}</div>
+            <div class="text-sm text-dim">ATK ${50 + i * 20}</div>
+          </div>
+        </div>
+        <div class="text-xs text-dim">Type: Melee | Element: None</div>
+      </div>`).join('')}
+    </div>
+  `;
+}
+
+// ==================== Crafting ====================
+function renderCrafting(el) {
+  el.innerHTML = `
+    <div class="page-title"><span class="icon">⚗️</span>${t('crafting')}</div>
+    <div class="filters">
+      <input class="filter-input" placeholder="${t('name')}" id="craftSearch" oninput="searchCraft(this.value)">
+    </div>
+    <div class="table-wrap">
+      <table id="craftTable">
+        <thead><tr><th>Input 1</th><th>Input 2</th><th>Output</th><th>${t('yield')}</th><th>${t('successRate')}</th></tr></thead>
+        <tbody>
+          <tr data-search="potion herb"><td>Herb</td><td>-</td><td>Potion</td><td>1</td><td>100%</td></tr>
+          <tr data-search="mega potion herb honey"><td>Herb</td><td>Honey</td><td>Mega Potion</td><td>1</td><td>90%</td></tr>
+          <tr data-search="fireball fireball sac"><td>Fireball Sac</td><td>-</td><td>Fireball</td><td>1</td><td>75%</td></tr>
+          <tr data-search="tranq bomb sleep herb monster fluid"><td>Sleep Herb</td><td>Monster Fluid</td><td>Tranq Bomb</td><td>1</td><td>65%</td></tr>
+          <tr data-search="max potion herb godbug"><td>Herb</td><td>Godbug</td><td>Max Potion</td><td>1</td><td>55%</td></tr>
+          <tr data-search="demondrug powerdraw mushroom"><td>Powerdraw Mushroom</td><td>Honey</td><td>Demondrug</td><td>1</td><td>60%</td></tr>
+          <tr data-search="armorskin bitterbug"><td>Bitterbug</td><td>Honey</td><td>Armorskin</td><td>1</td><td>60%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function searchCraft(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('#craftTable tbody tr').forEach(tr => {
+    tr.style.display = (tr.dataset.search || '').includes(q) ? '' : 'none';
+  });
+}
+
+// ==================== Set Builder ====================
+function renderSetBuilder(el) {
+  const saved = JSON.parse(localStorage.getItem('mhgu_sets') || '[]');
+  
+  el.innerHTML = `
+    <div class="page-title"><span class="icon">🧰</span>${t('setBuilder')}</div>
+    <div class="card mb-4" style="border-left: 3px solid var(--accent);">
+      <p class="text-sm text-dim">ℹ️ ${t('localDataNotice')}</p>
+    </div>
+    <div class="flex gap-2 mb-4">
+      <button class="btn btn-primary" onclick="createNewSet()">+ ${t('create')}</button>
+      <button class="btn" onclick="exportSets()">${t('export')}</button>
+      <button class="btn" onclick="importSets()">${t('import')}</button>
+    </div>
+    
+    ${saved.length === 0 ? `
+      <div class="state-container">
+        <div class="state-icon">🧰</div>
+        <div class="state-text">${t('noData')}</div>
+        <button class="btn btn-primary" onclick="createNewSet()">+ ${t('create')}</button>
+      </div>
+    ` : `
+      <div class="grid grid-2">
+        ${saved.map((set, i) => `
+          <div class="card">
+            <div class="flex justify-between items-center mb-3">
+              <div class="fw-600">${set.name}</div>
+              <div class="flex gap-2">
+                <button class="btn btn-sm" onclick="editSet(${i})">${t('edit')}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteSet(${i})">${t('delete')}</button>
+              </div>
+            </div>
+            <div class="set-slots">
+              ${['weapon','head','body','arms','waist','legs','talisman'].map(slot => `
+                <div class="set-slot ${set.equipment?.[slot] ? '' : 'empty'}">
+                  <div class="slot-label">${t(slot)}</div>
+                  <div class="slot-value">${set.equipment?.[slot] ? getName(MOCK_DATA.armor.find(a => a.id == set.equipment[slot]) || {}) || set.equipment[slot] : 'Empty'}</div>
+                </div>
+              `).join('')}
+            </div>
+            <div class="mt-3">
+              <div class="section-title" style="font-size:13px;margin-bottom:8px">🌳 ${t('skillResult')}</div>
+              <div class="skill-result">
+                ${Object.entries(set.skills || {}).map(([sid, pts]) => {
+                  const st = MOCK_DATA.skillTrees.find(s => s.id == sid);
+                  if (!st) return '';
+                  const active = st.thresholds.filter(th => th.pts <= pts).pop();
+                  return `<div class="skill-row">
+                    <span class="skill-name">${getName(st)}</span>
+                    <span class="skill-pts">${pts > 0 ? '+' : ''}${pts}</span>
+                    <span class="${active ? 'skill-active' : 'skill-inactive'}">${active ? active.skill : '-'}</span>
+                  </div>`;
+                }).join('') || '<p class="text-dim text-sm">No skills</p>'}
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `}
+  `;
+}
+
+function createNewSet() {
+  openModal(t('create'), `
+    <div class="mb-3">
+      <label class="text-sm text-dim">${t('name')}</label>
+      <input type="text" id="newSetName" class="filter-input w-full mt-2" placeholder="My Set">
+    </div>
+  `, [
+    { label: t('cancel'), action: 'closeModal()' },
+    { label: t('create'), action: 'saveNewSet()', primary: true },
+  ]);
+}
+
+function saveNewSet() {
+  const name = document.getElementById('newSetName').value.trim() || 'Untitled Set';
+  const sets = JSON.parse(localStorage.getItem('mhgu_sets') || '[]');
+  sets.push({ name, equipment: {}, skills: {}, created: Date.now() });
+  try {
+    localStorage.setItem('mhgu_sets', JSON.stringify(sets));
+    closeModal();
+    showToast(t('save') + ' ✓', 'success');
+    render();
+  } catch(e) {
+    showToast(t('saveFailed'), 'error');
+  }
+}
+
+function editSet(idx) {
+  const sets = JSON.parse(localStorage.getItem('mhgu_sets') || '[]');
+  const set = sets[idx];
+  openModal(t('edit') + ': ' + set.name, `
+    <div class="mb-3">
+      <label class="text-sm text-dim">${t('name')}</label>
+      <input type="text" id="editSetName" class="filter-input w-full mt-2" value="${set.name}">
+    </div>
+    <div class="mb-3">
+      <label class="text-sm text-dim">${t('head')}</label>
+      <select id="editSetHead" class="filter-input w-full mt-2">
+        <option value="">- Empty -</option>
+        ${MOCK_DATA.armor.filter(a => a.type === 'head').map(a => `<option value="${a.id}" ${set.equipment?.head == a.id ? 'selected' : ''}>${getName(a)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="text-sm text-dim">${t('body')}</label>
+      <select id="editSetBody" class="filter-input w-full mt-2">
+        <option value="">- Empty -</option>
+        ${MOCK_DATA.armor.filter(a => a.type === 'body').map(a => `<option value="${a.id}" ${set.equipment?.body == a.id ? 'selected' : ''}>${getName(a)}</option>`).join('')}
+      </select>
+    </div>
+  `, [
+    { label: t('cancel'), action: 'closeModal()' },
+    { label: t('save'), action: `saveEditSet(${idx})`, primary: true },
+  ]);
+}
+
+function saveEditSet(idx) {
+  const sets = JSON.parse(localStorage.getItem('mhgu_sets') || '[]');
+  sets[idx].name = document.getElementById('editSetName').value.trim() || sets[idx].name;
+  sets[idx].equipment = sets[idx].equipment || {};
+  sets[idx].equipment.head = document.getElementById('editSetHead').value;
+  sets[idx].equipment.body = document.getElementById('editSetBody').value;
+  
+  // Recalculate skills
+  const skills = {};
+  ['head', 'body'].forEach(slot => {
+    const aid = sets[idx].equipment[slot];
+    if (aid) {
+      const armor = MOCK_DATA.armor.find(a => a.id == aid);
+      if (armor?.skills) {
+        Object.entries(armor.skills).forEach(([sid, pts]) => {
+          skills[sid] = (skills[sid] || 0) + pts;
+        });
+      }
+    }
+  });
+  sets[idx].skills = skills;
+  
+  try {
+    localStorage.setItem('mhgu_sets', JSON.stringify(sets));
+    closeModal();
+    showToast(t('save') + ' ✓', 'success');
+    render();
+  } catch(e) {
+    showToast(t('saveFailed'), 'error');
+  }
+}
+
+function deleteSet(idx) {
+  openModal(t('delete'), `<p>${t('deleteConfirm')}</p>`, [
+    { label: t('cancel'), action: 'closeModal()' },
+    { label: t('delete'), action: `confirmDeleteSet(${idx})`, primary: false, danger: true },
+  ]);
+}
+
+function confirmDeleteSet(idx) {
+  const sets = JSON.parse(localStorage.getItem('mhgu_sets') || '[]');
+  sets.splice(idx, 1);
+  localStorage.setItem('mhgu_sets', JSON.stringify(sets));
+  closeModal();
+  showToast(t('delete') + ' ✓', 'success');
+  render();
+}
+
+function exportSets() {
+  const data = localStorage.getItem('mhgu_sets') || '[]';
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mhgu_sets_backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(t('exportSuccess'), 'success');
+}
+
+function importSets() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!Array.isArray(data)) throw new Error('Invalid format');
+        localStorage.setItem('mhgu_sets', JSON.stringify(data));
+        showToast(t('importSuccess'), 'success');
+        render();
+      } catch(err) {
+        showToast(t('importFailed'), 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// ==================== Favorites ====================
+function renderFavorites(el) {
+  const lists = JSON.parse(localStorage.getItem('mhgu_favorites') || '[]');
+  
+  el.innerHTML = `
+    <div class="page-title"><span class="icon">⭐</span>${t('favorites')}</div>
+    <div class="card mb-4" style="border-left: 3px solid var(--accent);">
+      <p class="text-sm text-dim">ℹ️ ${t('localDataNotice')}</p>
+    </div>
+    <div class="flex gap-2 mb-4">
+      <button class="btn btn-primary" onclick="createNewList()">+ ${t('create')}</button>
+      <button class="btn" onclick="exportFavorites()">${t('export')}</button>
+      <button class="btn" onclick="importFavorites()">${t('import')}</button>
+    </div>
+    
+    ${lists.length === 0 ? `
+      <div class="state-container">
+        <div class="state-icon">⭐</div>
+        <div class="state-text">${t('noData')}</div>
+        <button class="btn btn-primary" onclick="createNewList()">+ ${t('create')}</button>
+      </div>
+    ` : `
+      <div class="grid grid-2">
+        ${lists.map((list, i) => `
+          <div class="card">
+            <div class="flex justify-between items-center mb-3">
+              <div class="fw-600">${list.name}</div>
+              <div class="flex gap-2">
+                <button class="btn btn-sm" onclick="editList(${i})">${t('edit')}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteList(${i})">${t('delete')}</button>
+              </div>
+            </div>
+            <div class="text-sm text-dim mb-2">${list.items?.length || 0} items</div>
+            ${(list.items || []).slice(0, 3).map(item => `
+              <div class="collection-item">
+                <div class="item-icon" style="width:28px;height:28px;font-size:14px">${item.icon || '📦'}</div>
+                <div class="item-info" style="flex:1">
+                  <div class="text-sm fw-600">${item.name}</div>
+                </div>
+                <div class="text-xs text-dim">${item.owned || 0}/${item.target || 1}</div>
+              </div>
+            `).join('')}
+            ${(list.items || []).length > 3 ? `<div class="text-xs text-dim mt-2">+${list.items.length - 3} more...</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `}
+  `;
+}
+
+function createNewList() {
+  openModal(t('create'), `
+    <div class="mb-3">
+      <label class="text-sm text-dim">${t('name')}</label>
+      <input type="text" id="newListName" class="filter-input w-full mt-2" placeholder="My List">
+    </div>
+  `, [
+    { label: t('cancel'), action: 'closeModal()' },
+    { label: t('create'), action: 'saveNewList()', primary: true },
+  ]);
+}
+
+function saveNewList() {
+  const name = document.getElementById('newListName').value.trim() || 'Untitled List';
+  const lists = JSON.parse(localStorage.getItem('mhgu_favorites') || '[]');
+  lists.push({ name, items: [], created: Date.now() });
+  try {
+    localStorage.setItem('mhgu_favorites', JSON.stringify(lists));
+    closeModal();
+    showToast(t('save') + ' ✓', 'success');
+    render();
+  } catch(e) {
+    showToast(t('saveFailed'), 'error');
+  }
+}
+
+function editList(idx) {
+  const lists = JSON.parse(localStorage.getItem('mhgu_favorites') || '[]');
+  const list = lists[idx];
+  openModal(t('edit') + ': ' + list.name, `
+    <div class="mb-3">
+      <label class="text-sm text-dim">${t('name')}</label>
+      <input type="text" id="editListName" class="filter-input w-full mt-2" value="${list.name}">
+    </div>
+    <div class="mb-3">
+      <label class="text-sm text-dim">Add Item</label>
+      <div class="flex gap-2 mt-2">
+        <input type="text" id="addItemName" class="filter-input" placeholder="Item name" style="flex:1">
+        <input type="number" id="addItemQty" class="filter-input" value="1" style="width:60px">
+        <button class="btn btn-sm btn-primary" onclick="addToList(${idx})">+</button>
+      </div>
+    </div>
+    <div>
+      ${(list.items || []).map((item, ii) => `
+        <div class="collection-item">
+          <div class="fw-600 text-sm" style="flex:1">${item.name}</div>
+          <input type="number" class="qty-input" value="${item.owned || 0}" onchange="updateOwned(${idx},${ii},this.value)" title="${t('owned')}">
+          <span class="text-xs text-muted">/</span>
+          <span class="text-sm">${item.target || 1}</span>
+          <button class="btn btn-sm btn-danger" onclick="removeFromList(${idx},${ii})">×</button>
+        </div>
+      `).join('') || '<p class="text-dim text-sm">No items</p>'}
+    </div>
+  `, [
+    { label: t('cancel'), action: 'closeModal()' },
+    { label: t('save'), action: `saveEditList(${idx})`, primary: true },
+  ]);
+}
+
+function addToList(idx) {
+  const name = document.getElementById('addItemName').value.trim();
+  const qty = parseInt(document.getElementById('addItemQty').value) || 1;
+  if (!name) return;
+  const lists = JSON.parse(localStorage.getItem('mhgu_favorites') || '[]');
+  lists[idx].items = lists[idx].items || [];
+  lists[idx].items.push({ name, target: qty, owned: 0, icon: '📦' });
+  localStorage.setItem('mhgu_favorites', JSON.stringify(lists));
+  editList(idx);
+}
+
+function updateOwned(listIdx, itemIdx, val) {
+  const lists = JSON.parse(localStorage.getItem('mhgu_favorites') || '[]');
+  lists[listIdx].items[itemIdx].owned = parseInt(val) || 0;
+  localStorage.setItem('mhgu_favorites', JSON.stringify(lists));
+}
+
+function removeFromList(listIdx, itemIdx) {
+  const lists = JSON.parse(localStorage.getItem('mhgu_favorites') || '[]');
+  lists[listIdx].items.splice(itemIdx, 1);
+  localStorage.setItem('mhgu_favorites', JSON.stringify(lists));
+  editList(listIdx);
+}
+
+function saveEditList(idx) {
+  const lists = JSON.parse(localStorage.getItem('mhgu_favorites') || '[]');
+  lists[idx].name = document.getElementById('editListName').value.trim() || lists[idx].name;
+  localStorage.setItem('mhgu_favorites', JSON.stringify(lists));
+  closeModal();
+  showToast(t('save') + ' ✓', 'success');
+  render();
+}
+
+function deleteList(idx) {
+  openModal(t('delete'), `<p>${t('deleteConfirm')}</p>`, [
+    { label: t('cancel'), action: 'closeModal()' },
+    { label: t('delete'), action: `confirmDeleteList(${idx})`, primary: false, danger: true },
+  ]);
+}
+
+function confirmDeleteList(idx) {
+  const lists = JSON.parse(localStorage.getItem('mhgu_favorites') || '[]');
+  lists.splice(idx, 1);
+  localStorage.setItem('mhgu_favorites', JSON.stringify(lists));
+  closeModal();
+  showToast(t('delete') + ' ✓', 'success');
+  render();
+}
+
+function exportFavorites() {
+  const data = localStorage.getItem('mhgu_favorites') || '[]';
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mhgu_favorites_backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(t('exportSuccess'), 'success');
+}
+
+function importFavorites() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!Array.isArray(data)) throw new Error('Invalid format');
+        localStorage.setItem('mhgu_favorites', JSON.stringify(data));
+        showToast(t('importSuccess'), 'success');
+        render();
+      } catch(err) {
+        showToast(t('importFailed'), 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// ==================== Modal ====================
+function openModal(title, body, buttons = []) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modalFooter').innerHTML = buttons.map(b => 
+    `<button class="btn ${b.primary ? 'btn-primary' : ''} ${b.danger ? 'btn-danger' : ''}" onclick="${b.action}">${b.label}</button>`
+  ).join('');
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeModal();
+    document.getElementById('searchResults').classList.remove('show');
+  }
+});
+
+// ==================== Toast ====================
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+    toast.style.transition = '0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// ==================== Empty State ====================
+function emptyState() {
+  return `<div class="state-container">
+    <div class="state-icon">📭</div>
+    <div class="state-text">${t('noData')}</div>
+    <button class="btn" onclick="history.back()">${t('back')}</button>
+  </div>`;
+}
+
+// ==================== Init ====================
+function init() {
+  // Restore language
+  document.getElementById('langSelect').value = currentLang;
+  setLang(currentLang);
+  
+  // Parse initial route
+  currentRoute = parseHash();
+  render();
+  
+  // Setup search
+  setupSearch();
+}
+
+init();
+</script>
+</body>
+</html>
